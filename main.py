@@ -10,7 +10,8 @@ if len(sys.argv) is 1:
     print("No files specified, exiting")
 
 # User requested we use video input.
-if sys.argv[1] is "-v":
+elif sys.argv[1] == "-v":
+    cap = None
     # Find which device was specified by user, or default to device 0
     if len(sys.argv) > 2:
         cap = cv.VideoCapture(sys.argv[2])
@@ -21,24 +22,28 @@ if sys.argv[1] is "-v":
     while True:
         ret, frame = cap.read()
         pimg = niproc.processimage(frame)
+        cv.imshow("Current frame", pimg)
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break
+    cv.destroyAllWindows()
 
-# There's input, read it!
-for uin in sys.argv[1:]:
-    print("Loading ", uin)
-    img = cv.imread(uin)
+else:
+    # There's input, read it!
+    for uin in sys.argv[1:]:
+        print("Loading ", uin)
+        img = cv.imread(uin)
 
-    if img is not None:
-        print("Found image")
+        if img is not None:
+            print("Found image")
 
-        # TODO: Do interpretation stuff here to Processed IMaGe (pimg)
-        pimg = img
-        pimg = niproc.processimage(pimg)
-        pimg = cv.pyrDown(pimg)
+            pimg = img
+            pimg = niproc.processimage(pimg)
+            pimg = cv.pyrDown(pimg)
 
-        cv.imshow("Current image", pimg)
-        cv.waitKey()
-        cv.destroyAllWindows()
+            cv.imshow("Current image", pimg)
+            cv.waitKey()
+            cv.destroyAllWindows()
 
-    else:
-        print("Couldn't read that file. Does it exist at the location specified?")
+        else:
+            print("Couldn't read that file. Does it exist at the location specified?")
 
