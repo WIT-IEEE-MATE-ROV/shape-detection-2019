@@ -22,7 +22,7 @@ elif sys.argv[1] == "-v":
     while True:
         ret, frame = cap.read()
         pimg = niproc.processimage(frame)
-        cv.imshow("Current frame", pimg)
+        cv.imshow("Current frame", pimg.image)
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
     cv.destroyAllWindows()
@@ -38,7 +38,7 @@ else:
 
             pimg = img
             pimg = niproc.processimage(pimg)
-            pimg = cv.pyrDown(pimg)
+            pimg = cv.pyrDown(pimg.processedImage)
 
             cv.imshow("Current image", pimg)
             cv.waitKey()
