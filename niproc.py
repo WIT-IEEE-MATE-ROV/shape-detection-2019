@@ -19,7 +19,7 @@ def processimage(image):
     mask = cv.inRange(image, range_lower, range_upper)
 
     image_tuple.cleanImage     = image
-    image_tuple.processedImage = mask
+    image_tuple.processedImage = image
 
     image_tuple = detectsquares(image_tuple)
     image_tuple = detectlines(image_tuple)
@@ -30,18 +30,32 @@ def processimage(image):
 
 
 def addoverlay(image_tuple):
+    height, width, channels = image_tuple.cleanImage.shape
+
     font = cv.FONT_HERSHEY_PLAIN
-    position = (20, 5*300) # Image is 5"x5", 300 pixel per inch
-    fontsize = 5
-    color = (0, 0, 255)
-    linetype = 2
-    cv.putText(image_tuple.processedImage,  # Image
-               'Hello World!',              # Text to be written
-               (0, 5*300),                  # Position (Image is 5" by 5", 300 ppi.)
-               cv.FONT_HERSHEY_PLAIN,       # One of few font options
-               5,                           # Font size
-               (0, 0, 255),                 # Color
-               2)                           # Line type
+    x = int(width / 4)
+    y = int(height / 5)
+    fontsize = 15
+    color = (0,0,255)
+    linetype = cv.LINE_AA
+
+    scale = 6 * fontsize            # allows symbols to grow/shrink based on text size
+
+    squareCount = str(processed_img.squareCount)
+    lineCount = str(processed_img.lineCount)
+    circleCount = str(processed_img.circleCount)
+    triangleCount = str(processed_img.triangleCount)
+
+    cv.putText(image_tuple.processedImage, squareCount, (x, y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.processedImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.processedImage, circleCount, (x, 3 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.processedImage, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
+
+    cv.rectangle(image_tuple.processedImage, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
+    cv.line(image_tuple.processedImage, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
+    cv.circle(image_tuple.processedImage, (2 * x + scale, 3 * y - scale), scale, color, -linetype)
+    pts = np.array([[2 * x + scale, 4 * y - 2 * scale], [2 * x, 4 * y], [2 * x + 2 * scale, 4 * y]], np.int32)
+    cv.fillPoly(image_tuple.processedImage, [pts], color)
 
     return image_tuple
 
