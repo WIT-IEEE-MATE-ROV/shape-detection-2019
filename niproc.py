@@ -19,7 +19,7 @@ def processimage(image):
     mask = cv.inRange(image, range_lower, range_upper)
 
     image_tuple.cleanImage     = image
-    image_tuple.processedImage = mask
+    image_tuple.processedImage = image
 
     image_tuple = detectsquares(image_tuple)
     image_tuple = detectlines(image_tuple)
@@ -30,71 +30,32 @@ def processimage(image):
 
 
 def addoverlay(image_tuple):
-    height = 410                                       #height of new blank image (px)
-    width = 200                                        #width of new blank image (px)
-    overlay = np.zeros((height,width,3), np.uint8)     #create a new black image
-    overlay[:,0:width] = (255,255,255)                 #recolor the image white
+    height, width, channels = image_tuple.cleanImage.shape
 
     font = cv.FONT_HERSHEY_PLAIN
-    position = (20, 5*300)                             # Image is 5"x5", 300 pixel per inch
-    fontsize = 5
-    color = (0, 0, 255)
-    linetype = 2
+    x = int(width / 4)
+    y = int(height / 5)
+    fontsize = 15
+    color = (0,0,255)
+    linetype = cv.LINE_AA
 
-    """cv.putText(img,  # Image
-               'Hello World!',              # Text to be written
-               (20, 5*300),                    # Position (Image is 5" by 5", 300 ppi.)
-               cv.FONT_HERSHEY_PLAIN,       # One of few font options
-               5,                           # Font size
-               (0, 0, 255),                 # Color
-               2)                           # Line type
-    """
-    
-    maxPer = 6
-    maxTotal = 15
+    scale = 6 * fontsize            # allows symbols to grow/shrink based on text size
 
-    squareCount = processed_img.squareCount
-    squareCount = str(squareCount)
-    lineCount = processed_img.lineCount
-    lineCount = str(lineCount)
-    circleCount = processed_img.circleCount
-    circleCount = str(circleCount)
-    triangleCount = processed_img.triangleCount
-    triangleCount = str(triangleCount)
-    
-    
-    """squareCount = 1
-    squareCount = str(squareCount)
-    lineCount = 1
-    lineCount = str(lineCount)
-    circleCount = 1
-    circleCount = str(circleCount)
-    triangleCount = 1
-    triangleCount = str(triangleCount)
-    """
+    squareCount = str(processed_img.squareCount)
+    lineCount = str(processed_img.lineCount)
+    circleCount = str(processed_img.circleCount)
+    triangleCount = str(processed_img.triangleCount)
 
-    """if ((squareCount or lineCount or circleCount or triangleCount) <= maxPer) and 
-       ((squareCount + lineCount + circleCount + triangleCount) <= maxTotal):
-    """
-    cv.putText(overlay, squareCount, (30,80), font, fontsize, color, linetype, cv.LINE_AA)
-    cv.putText(overlay, lineCount, (30,180), font, fontsize, color, linetype, cv.LINE_AA)
-    cv.putText(overlay, circleCount, (30,280), font, fontsize, color, linetype, cv.LINE_AA)
-    cv.putText(overlay, triangleCount, (30,380), font, fontsize, color, linetype, cv.LINE_AA)
+    cv.putText(image_tuple.processedImage, squareCount, (x, y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.processedImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.processedImage, circleCount, (x, 3 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.processedImage, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
 
-    cv.rectangle(overlay, (120,30), (170,80), color, -linetype)
-    cv.line(overlay, (145,130), (145,180), color, 2*linetype)
-    cv.circle(overlay, (145,255), 25, color, -linetype)
-    pts = np.array([[145,330],[120,380],[170,380]], np.int32)
-    cv.fillPoly(overlay, [pts], color)
-    
-    """else:
-        retry
-        after retrying x times, break
-    """
-
-    cv.imshow('overlay', overlay)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    cv.rectangle(image_tuple.processedImage, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
+    cv.line(image_tuple.processedImage, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
+    cv.circle(image_tuple.processedImage, (2 * x + scale, 3 * y - scale), scale, color, -linetype)
+    pts = np.array([[2 * x + scale, 4 * y - 2 * scale], [2 * x, 4 * y], [2 * x + 2 * scale, 4 * y]], np.int32)
+    cv.fillPoly(image_tuple.processedImage, [pts], color)
 
     return image_tuple
 
