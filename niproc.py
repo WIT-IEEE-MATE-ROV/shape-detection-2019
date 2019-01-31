@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 import collections
-
+import imutils
 
 """
 processimage
@@ -16,15 +16,17 @@ def processimage(image):
     # TODO: Should HSV be used here (Currently using BGR)
     range_lower = np.array([0, 0, 0])
     range_upper = np.array([15, 15, 15])
-    mask = cv.inRange(image, range_lower, range_upper)
+    blurred = cv.GaussianBlur(image, (11, 11), 0)
+    hsv = cv.cvtColor(blurred, cv.COLOR_BGR2HSV)
+    mask = cv.inRange(hsv, range_lower, range_upper)
+    mask = cv.erode(mask, None, iterations=2)
+    mask = cv.dilate(mask, None, iterations=2)
 
     image_tuple.cleanImage     = image
     image_tuple.processedImage = mask
+    print (image_tuple.processedImage.dtype)
 
-    image_tuple = detectsquares(image_tuple)
-    image_tuple = detectlines(image_tuple)
-    image_tuple = detectcircles(image_tuple)
-    image_tuple = detecttriangles(image_tuple)
+    image_tuple = detectshapes(image,mask)
 
     return addoverlay(image_tuple)
 
@@ -99,25 +101,76 @@ def addoverlay(image_tuple):
     return image_tuple
 
 
-def detectsquares(processed_img):
-    #TODO
-    print('Detected ', processed_img.squareCount, ' squares.')
+def detectsquares(c):
+    shape = 'Undefined'
+    peri = cv.arcLength(c, True)
+    approx = cv.approxPolyDP(c, 0.04 * peri, True)
+    if len(approx) == 4:
+        (x, y, w, h) = cv.boundingRect(approx)
+        ar = w / float(h)
+        shape = "square" if ar >= 0.95 and ar <= 1.05 else 'rectangle'
+        processed_img.squareCount = processed_img.squareCount + 1
+        print('Detected ', processed_img.squareCount, ' squares.')
+    return shape
     return processed_img
 
 
-def detectlines(processed_img):
+
+def detectlines(c):
     # TODO
     print('Detected ', processed_img.lineCount, ' lines.')
     return processed_img
 
 
-def detectcircles(processed_img):
-    # TODO
-    print('Detected ', processed_img.circleCount, ' circles.')
+def detectcircles(c):
+    shape = 'Undefined'
+    peri = cv.arcLength(c, True)
+    approx = cv.approxPolyDP(c, 0.04 * peri, True)
+    if len(approx) > 5:
+        shape = "Circle"
+        processed_img.circleCount = processed_img.circleCount + 1
+        print('Detected ', processed_img.circleCount, ' circles.')
+    return shape
     return processed_img
 
 
-def detecttriangles(processed_img):
-    # TODO
-    print('Detected ', processed_img.triangleCount, ' triangles.')
+def detecttriangles(c):
+    shape = 'Undefined'
+    peri = cv.arcLength(c, True)
+    approx = cv.approxPolyDP(c, 0.04 * peri, True)
+    if len(approx) == 3:
+        shape = "triangle"
+        processed_img.triangleCount = processed_img.triangleCount + 1
+        print('Detected ', processed_img.triangleCount, ' triangles.')
+    return shape
     return processed_img
+
+def detectshapes(image,mask):
+    cnts = findcountours(mask)
+    for c in cnts:
+        # compute the center of the contour, then detect the name of the
+        # shape using only the contour
+        M = cv.moments(c)
+
+        cX = int((M["m10"] / (M["m00"] + 1e-7)))
+        cY = int((M["m01"] / (M["m00"] + 1e-7)))
+
+        shape = detectsquares(c)
+        shape = detectcircles(c)
+        shape = detecttriangles(c)
+
+        # multiply the contour (x, y)-coordinates by the resize ratio,
+        # then draw the contours and the name of the shape on the image
+        c = c.astype("float")
+        c = c.astype("int")
+        cv.drawContours(image, [c], -1, (0, 255, 0), 2)
+        processedImage = cv.putText(image, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,
+                    0.5, (255, 255, 255), 2)
+        return processedImage
+
+
+def findcountours(mask):
+    cnts = cv.findContours(mask.copy(), cv.RETR_EXTERNAL,
+                            cv.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    return cnts
