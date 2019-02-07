@@ -23,6 +23,14 @@ elif sys.argv[1] == "-v":
         ret, frame = cap.read()
         pimg = niproc.processimage(frame)
         cv.imshow("Current frame", pimg.image)
+        
+        #Get tick-count to measure performance indirectly
+        e1 = cv2.getTickCount()
+        for i in xrange(5,49,2):
+            img1 = cv2.medianBlur(img1,i)
+        e2 = cv2.getTickCount()
+        t = (e2 - e1)/cv2.getTickFrequency()
+            print t
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
     cv.destroyAllWindows()
