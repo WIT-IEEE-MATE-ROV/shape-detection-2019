@@ -30,12 +30,12 @@ def processimage(image):
 
     image_tuple = detectshapes(image, mask, image_tuple, Squares, Circles, Triangles)
 
-    return addoverlay(image_tuple)
+    return addoverlay(image_tuple, Squares,image, Circles, Triangles)
 
 
-def addoverlay(image_tuple):
+def addoverlay(image_tuple,image, Squares, Circles, Triangles):
 
-    height, width, channels = image_tuple.cleanImage.shape
+    height, width, channels = image
 
     font = cv.FONT_HERSHEY_PLAIN
     x = int(width / 4)
@@ -46,21 +46,21 @@ def addoverlay(image_tuple):
 
     scale = 6 * fontsize            # allows symbols to grow/shrink based on text size
 
-    squareCount = str(processed_img.squareCount)
-    lineCount = str(processed_img.lineCount)
-    circleCount = str(processed_img.circleCount)
-    triangleCount = str(processed_img.triangleCount)
+    squareCount = str(Squares)
+    #lineCount = str(processed_img.lineCount)
+    circleCount = str(Circles)
+    triangleCount = str(Triangles)
 
-    cv.putText(image_tuple.processedImage, squareCount, (x, y), font, fontsize, color, linetype)
-    cv.putText(image_tuple.processedImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
-    cv.putText(image_tuple.processedImage, circleCount, (x, 3 * y), font, fontsize, color, linetype)
-    cv.putText(image_tuple.processedImage, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
+    cv.putText(mask, squareCount, (x, y), font, fontsize, color, linetype)
+    #cv.putText(image_tuple.processedImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
+    cv.putText(mask, circleCount, (x, 3 * y), font, fontsize, color, linetype)
+    cv.putText(mask, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
 
-    cv.rectangle(image_tuple.processedImage, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
-    cv.line(image_tuple.processedImage, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
-    cv.circle(image_tuple.processedImage, (2 * x + scale, 3 * y - scale), scale, color, -linetype)
+    cv.rectangle(mask, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
+    cv.line(mask, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
+    cv.circle(mask, (2 * x + scale, 3 * y - scale), scale, color, -linetype)
     pts = np.array([[2 * x + scale, 4 * y - 2 * scale], [2 * x, 4 * y], [2 * x + 2 * scale, 4 * y]], np.int32)
-    cv.fillPoly(image_tuple.processedImage, [pts], color)
+    cv.fillPoly(mask, [pts], color)
 
     return image_tuple
 
@@ -75,11 +75,11 @@ def detectsquares(c, image_tuple, Squares):
         shape = "square" if ar >= 0.95 and ar <= 1.05 else 'rectangle'
         Squares = Squares + 1
         image_tuple.squareCount = Squares
-        processedImage.squareCount = Squares
+        processed_img.squareCount = Squares
         print('Detected ', image_tuple.squareCount, ' squares.')
     return shape
     return image_tuple
-    return processedImage
+    return processedImage.squareCount
 
 
 
@@ -133,9 +133,9 @@ def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
         c = c.astype("float")
         c = c.astype("int")
         cv.drawContours(image, [c], -1, (0, 255, 0), 2)
-        processedImage = cv.putText(image, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,
+        image_tuple = cv.putText(image_tuple.cleanImage, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,
                     0.5, (255, 255, 255), 2)
-        return processedImage
+        #return processedImage
         return image_tuple
 
 
