@@ -9,11 +9,9 @@ returns a 'processed image' named tuple.
 The named tuple contains the image with an overlay, and counts of shapes
 in 'squareCount', 'linecount', etc. 
 """
+
 def processimage(image):
     image_tuple = collections.namedtuple('processedImage', ['cleanImage', 'squareCount', 'lineCount', 'circleCount', 'triangleCount'])
-    Squares = 0
-    Circles = 0
-    Triangles = 0
     # Pull out only the black parts of the image
     # TODO: Should HSV be used here (Currently using BGR)
     range_lower = np.array([0, 0, 0])
@@ -28,8 +26,8 @@ def processimage(image):
     image_tuple.processedImage = mask
     print (image_tuple.processedImage.dtype)
 
-    image_tuple = detectshapes(image, mask, image_tuple, Squares, Circles, Triangles)
-    print('test ' ,image_tuple.circleCount)
+    image_tuple = detectshapes(image, mask, image_tuple)
+    print('test ',image_tuple.circleCount)
     image_tuple = addoverlay(image_tuple)
 
     return image_tuple
@@ -41,14 +39,14 @@ def addoverlay(image_tuple):
     font = cv.FONT_HERSHEY_PLAIN
     x = int(width / 4)
     y = int(height / 5)
-    fontsize = 3
+    fontsize = 8
     color = (0, 0, 255)
     linetype = cv.LINE_AA
 
     scale = 6 * fontsize  # allows symbols to grow/shrink based on text size
 
     squareCount = str(image_tuple.squareCount)
- #   lineCount = str(processed_img.lineCount)
+ #  lineCount = str(processed_img.lineCount)
     circleCount = str(image_tuple.circleCount)
     triangleCount = str(image_tuple.triangleCount)
 
@@ -74,9 +72,9 @@ def detectsquares(c, image_tuple, Squares):
         (x, y, w, h) = cv.boundingRect(approx)
         ar = w / float(h)
         shape = "square" if ar >= 0.95 and ar <= 1.05 else 'rectangle'
-        Squares = Squares + 1
+        Squares =+ 1
         image_tuple.squareCount = Squares
-        return shape
+        return shape,Squares
         print('Detected ',image_tuple.squareCount, ' squares.')
     return image_tuple
 
@@ -95,10 +93,11 @@ def detectcircles(c, image_tuple, Circles):
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
     if len(approx) > 5:
         shape = "Circle"
-        Circles = Circles + 1
+        Circles =+ 1
         image_tuple.circleCount = Circles
         print('Detected ', image_tuple.circleCount, ' circles.')
-        return shape
+        return shape, Circles
+
     return image_tuple
 
 
@@ -111,7 +110,7 @@ def detecttriangles(c, image_tuple, Triangles):
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
     if len(approx) == 3:
         shape = "triangle"
-        Triangles = Triangles + 1
+        Triangles =+ 1
         image_tuple.triangleCount = Triangles
         print('Detected ', image_tuple.triangleCount, ' triangles.')
         return shape
@@ -119,9 +118,14 @@ def detecttriangles(c, image_tuple, Triangles):
 
 
 
-def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
-    cnts = findcountours(mask)
+def detectshapes(image,mask,image_tuple):
 
+    cnts = cv.findContours(mask.copy(), cv.RETR_EXTERNAL,
+                           cv.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    Squares = 0
+    Circles = 0
+    Triangles = 0
     for c in cnts:
         # compute the center of the contour, then detect the name of the
         # shape using only the contour
@@ -134,8 +138,6 @@ def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
         shape = detectcircles(c, image_tuple, Circles)
         shape = detecttriangles(c, image_tuple, Triangles)
 
-
-
         # multiply the contour (x, y)-coordinates by the resize ratio,
         # then draw the contours and the name of the shape on the image
         c = c.astype("float")
@@ -144,7 +146,9 @@ def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
         print('Detected Circles ',image_tuple.circleCount)
         image_tuple.cleanImage = cv.putText(image, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,0.5, (255, 255, 255), 2)
 
-        return image_tuple
+
+
+    return image_tuple
 def findcountours(mask):
     cnts = cv.findContours(mask.copy(), cv.RETR_EXTERNAL,
                             cv.CHAIN_APPROX_SIMPLE)
