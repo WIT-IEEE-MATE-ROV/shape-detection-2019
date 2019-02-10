@@ -40,7 +40,7 @@ def addoverlay(image_tuple, Squares, image , Circles , Triangles):
     font = cv.FONT_HERSHEY_PLAIN
     x = int(width / 4)
     y = int(height / 5)
-    fontsize = 15
+    fontsize = 7
     color = (0,0,255)
     linetype = cv.LINE_AA
 
@@ -48,7 +48,7 @@ def addoverlay(image_tuple, Squares, image , Circles , Triangles):
 
     squareCount = str(Squares)
     #lineCount = str(processed_img.lineCount)
-    circleCount = str(Circles)
+    circleCount = str(image_tuple.circleCount)
     print (Circles)
     triangleCount = str(Triangles)
 
@@ -96,12 +96,9 @@ def detectcircles(c, image_tuple, Circles):
     if len(approx) > 5:
         shape = "Circle"
         Circles = Circles + 1
-        Circlecount = Circles
         image_tuple.circleCount = Circles
         print('Detected ', image_tuple.circleCount, ' circles.')
         return shape
-        return Circles
-    return image_tuple.circleCount
     return image_tuple
 
 
@@ -115,12 +112,12 @@ def detecttriangles(c, image_tuple, Triangles):
     if len(approx) == 3:
         shape = "triangle"
         Triangles = Triangles + 1
-        Trianglecount = Triangles
         image_tuple.triangleCount = Triangles
         print('Detected ', image_tuple.triangleCount, ' triangles.')
-        return Trianglecount
-    return shape
-    return image_tuple
+        return shape
+    #return image_tuple
+
+
 
 def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
     cnts = findcountours(mask)
@@ -134,19 +131,20 @@ def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
         cY = int((M["m01"] / (M["m00"] + 1e-7)))
 
         shape = detectsquares(c, image_tuple, Squares)
-        shape = detectcircles(c, image_tuple, Circles,)
+        shape = detectcircles(c, image_tuple, Circles)
         shape = detecttriangles(c, image_tuple, Triangles)
+
+
 
         # multiply the contour (x, y)-coordinates by the resize ratio,
         # then draw the contours and the name of the shape on the image
         c = c.astype("float")
         c = c.astype("int")
         cv.drawContours(image, [c], -1, (0, 255, 0), 2)
-        print('Detected Circles ')
-        image_tuple = cv.putText(image_tuple.cleanImage, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,
-                    0.5, (255, 255, 255), 2)
+        print('Detected Circles ',image_tuple.circleCount)
+        image_tuple = cv.putText(image, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,0.5, (255, 255, 255), 2)
+
         return image_tuple
-        return Circles
 def findcountours(mask):
     cnts = cv.findContours(mask.copy(), cv.RETR_EXTERNAL,
                             cv.CHAIN_APPROX_SIMPLE)
