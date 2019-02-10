@@ -38,7 +38,7 @@ else:
 
             pimg = img
             pimg = niproc.processimage(pimg)
-            pimg = cv.pyrDown(pimg.processedImage)
+            pimg = cv.pyrDown(pimg.cleanImage)
 
             cv.imshow("Current image", pimg)
             cv.waitKey()
