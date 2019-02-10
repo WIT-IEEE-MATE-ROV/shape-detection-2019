@@ -70,7 +70,7 @@ def detectsquares(c, image_tuple, Squares):
     if len(approx) == 4:
         (x, y, w, h) = cv.boundingRect(approx)
         ar = w / float(h)
-        Squastate = "square" if ar >= 0.95 and ar <= 1.05 else 'rectangle'
+        Squastate = "square" if ar >= 0.70 and ar <= 1.3 else 'rectangle'
         return Squastate
 
 
