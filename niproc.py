@@ -33,9 +33,9 @@ def processimage(image):
     return addoverlay(image_tuple, Squares,image, Circles, Triangles)
 
 
-def addoverlay(image_tuple,image, Squares, Circles, Triangles):
+def addoverlay(image_tuple, Squares, image , Circles , Triangles):
 
-    height, width, channels = image
+    height, width, channels = image.shape
 
     font = cv.FONT_HERSHEY_PLAIN
     x = int(width / 4)
@@ -49,18 +49,19 @@ def addoverlay(image_tuple,image, Squares, Circles, Triangles):
     squareCount = str(Squares)
     #lineCount = str(processed_img.lineCount)
     circleCount = str(Circles)
+    print (Circles)
     triangleCount = str(Triangles)
 
-    cv.putText(mask, squareCount, (x, y), font, fontsize, color, linetype)
+    cv.putText(image, squareCount, (x, y), font, fontsize, color, linetype)
     #cv.putText(image_tuple.processedImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
-    cv.putText(mask, circleCount, (x, 3 * y), font, fontsize, color, linetype)
-    cv.putText(mask, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
+    cv.putText(image, circleCount, (x, 3 * y), font, fontsize, color, linetype)
+    cv.putText(image, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
 
-    cv.rectangle(mask, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
-    cv.line(mask, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
-    cv.circle(mask, (2 * x + scale, 3 * y - scale), scale, color, -linetype)
+    cv.rectangle(image, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
+    cv.line(image, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
+    cv.circle(image, (2 * x + scale, 3 * y - scale), scale, color, -linetype)
     pts = np.array([[2 * x + scale, 4 * y - 2 * scale], [2 * x, 4 * y], [2 * x + 2 * scale, 4 * y]], np.int32)
-    cv.fillPoly(mask, [pts], color)
+    cv.fillPoly(image, [pts], color)
 
     return image_tuple
 
@@ -74,12 +75,11 @@ def detectsquares(c, image_tuple, Squares):
         ar = w / float(h)
         shape = "square" if ar >= 0.95 and ar <= 1.05 else 'rectangle'
         Squares = Squares + 1
-        image_tuple.squareCount = Squares
-        processed_img.squareCount = Squares
-        print('Detected ', image_tuple.squareCount, ' squares.')
-    return shape
+        return shape
+        print('Detected ',Squares, ' squares.')
+        return Squares
     return image_tuple
-    return processedImage.squareCount
+
 
 
 
@@ -96,10 +96,16 @@ def detectcircles(c, image_tuple, Circles):
     if len(approx) > 5:
         shape = "Circle"
         Circles = Circles + 1
+        Circlecount = Circles
         image_tuple.circleCount = Circles
         print('Detected ', image_tuple.circleCount, ' circles.')
-    return shape
+        return shape
+        return Circles
+    return image_tuple.circleCount
     return image_tuple
+
+
+
 
 
 def detecttriangles(c, image_tuple, Triangles):
@@ -108,14 +114,17 @@ def detecttriangles(c, image_tuple, Triangles):
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
     if len(approx) == 3:
         shape = "triangle"
-        Triangels = Triangles + 1
+        Triangles = Triangles + 1
+        Trianglecount = Triangles
         image_tuple.triangleCount = Triangles
         print('Detected ', image_tuple.triangleCount, ' triangles.')
+        return Trianglecount
     return shape
     return image_tuple
 
 def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
     cnts = findcountours(mask)
+
     for c in cnts:
         # compute the center of the contour, then detect the name of the
         # shape using only the contour
@@ -125,7 +134,7 @@ def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
         cY = int((M["m01"] / (M["m00"] + 1e-7)))
 
         shape = detectsquares(c, image_tuple, Squares)
-        shape = detectcircles(c, image_tuple, Circles)
+        shape = detectcircles(c, image_tuple, Circles,)
         shape = detecttriangles(c, image_tuple, Triangles)
 
         # multiply the contour (x, y)-coordinates by the resize ratio,
@@ -133,12 +142,11 @@ def detectshapes(image,mask,image_tuple, Squares, Circles, Triangles):
         c = c.astype("float")
         c = c.astype("int")
         cv.drawContours(image, [c], -1, (0, 255, 0), 2)
+        print('Detected Circles ')
         image_tuple = cv.putText(image_tuple.cleanImage, shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,
                     0.5, (255, 255, 255), 2)
-        #return processedImage
         return image_tuple
-
-
+        return Circles
 def findcountours(mask):
     cnts = cv.findContours(mask.copy(), cv.RETR_EXTERNAL,
                             cv.CHAIN_APPROX_SIMPLE)
