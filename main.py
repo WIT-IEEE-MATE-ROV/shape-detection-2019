@@ -1,7 +1,7 @@
 import sys
 import cv2 as cv
 import niproc
-
+import numpy as np
 
 # Check if there is any input to be read
 if len(sys.argv) is 1:
@@ -12,17 +12,23 @@ if len(sys.argv) is 1:
 # User requested we use video input.
 elif sys.argv[1] == "-v":
     cap = None
+
     # Find which device was specified by user, or default to device 0
     if len(sys.argv) > 2:
         cap = cv.VideoCapture(sys.argv[2])
+
     else:
         cap = cv.VideoCapture(0)
 
+
     # Do video interpretation until process is killed
     while True:
+        print('Video Stream')
         ret, frame = cap.read()
         pimg = niproc.processimage(frame)
-        cv.imshow("Current frame", pimg.image)
+        cv.imshow("Current frame", pimg.cleanImage )
+        cv.imshow("HSV", pimg.HSV)
+        cv.imshow("What Code Sees", pimg.BlackWhite)
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
     cv.destroyAllWindows()
@@ -32,8 +38,9 @@ else:
     for uin in sys.argv[1:]:
         print("Loading ", uin)
         img = cv.imread(uin)
-
-        if img is not None:
+        imgtype = (img.dtype)
+        print(imgtype)
+        if imgtype == "uint8":
             print("Found image")
 
             pimg = img

@@ -11,24 +11,28 @@ in 'squareCount', 'linecount', etc.
 """
 
 def processimage(image):
-    image_tuple = collections.namedtuple('processedImage', ['cleanImage', 'squareCount', 'lineCount', 'circleCount', 'triangleCount'])
+    image_tuple = collections.namedtuple('processedImage', ['cleanImage','HSV','BlackWhite', 'squareCount', 'lineCount', 'circleCount', 'triangleCount'])
     # Pull out only the black parts of the image
     # TODO: Should HSV be used here (Currently using BGR)
+    k1 = np.ones((15, 15), np.uint8)
+    k2 = np.ones((12, 12), np.uint8)
     range_lower = np.array([0, 0, 0])
-    range_upper = np.array([175,175,175])
-    blurred = cv.GaussianBlur(image, (15, 15), 0)
+    range_upper = np.array([255,180,70])
+    blurred = cv.GaussianBlur(image, (5, 5), 0)
     hsv = cv.cvtColor(blurred, cv.COLOR_BGR2HSV)
-    mask = cv.inRange(hsv, range_lower, range_upper)
-    mask = cv.erode(mask, None, iterations=1)
-    mask = cv.dilate(mask, None, iterations=1)
+    image_tuple.HSV = hsv
 
+    mask = cv.inRange(hsv, range_lower, range_upper)
+    mask = cv.dilate(mask, None, iterations=3)
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, k1)
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN, k2)
+    image_tuple.BlackWhite = mask
     image_tuple.cleanImage     = image
     image_tuple.processedImage = mask
     print (image_tuple.processedImage.dtype)
 
     image_tuple = detectshapes(image_tuple)
     image_tuple = addoverlay(image_tuple)
-
     return image_tuple
 
 
@@ -38,16 +42,34 @@ def addoverlay(image_tuple):
     font = cv.FONT_HERSHEY_PLAIN
     x = int(width / 4)
     y = int(height / 5)
-    fontsize = 8
+    fontsize = 5
     color = (0, 0, 255)
     linetype = cv.LINE_AA
 
     scale = 6 * fontsize  # allows symbols to grow/shrink based on text size
 
-    squareCount = str(image_tuple.squareCount)
-    lineCount = str(image_tuple.lineCount)
-    circleCount = str(image_tuple.circleCount)
-    triangleCount = str(image_tuple.triangleCount)
+    if type(image_tuple.squareCount) != int:
+        squareCount = '0'
+    else :
+        squareCount = str(image_tuple.squareCount)
+
+    if type(image_tuple.lineCount) != int:
+        lineCount = '0'
+    else :
+        lineCount = str(image_tuple.lineCount)
+
+    if type(image_tuple.triangleCount) !=int:
+        circleCount = '0'
+    else:
+        circleCount = str(image_tuple.circleCount)
+
+    if type(image_tuple.triangleCount) != int:
+        triangleCount = '0'
+    else:
+        triangleCount = str(image_tuple.triangleCount)
+
+
+
 
     cv.putText(image_tuple.cleanImage, squareCount, (x, y), font, fontsize, color, linetype)
     cv.putText(image_tuple.cleanImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
@@ -67,13 +89,15 @@ def detectsquares(c, image_tuple, Squares):
     peri = cv.arcLength(c, True)
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
     Squastate = 'false'
-    if len(approx) == 4:
+    if len(approx) <= 4 and len(approx) > 3:
         (x, y, w, h) = cv.boundingRect(approx)
-        ar = w / float(h)
-        Squastate = "square" if ar >= 0.70 and ar <= 1.3 else 'rectangle'
+        ar = w / h
+        if ar >= 0.6 and ar <= 1.4:
+            Squastate = "rectangle"
+
+        else:
+            Squastate = "square"
         return Squastate
-
-
 
 
 def detectlines(c):
@@ -86,7 +110,7 @@ def detectcircles(c, image_tuple, Circles):
     peri = cv.arcLength(c, True)
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
     Circstate = 'false'
-    if len(approx) > 5:
+    if len(approx) > 4 :
         Circstate = 'true'
         image_tuple.circleCount = Circles
         return Circstate
@@ -148,8 +172,6 @@ def detectshapes(image_tuple):
             image_tuple.lineCount = Rectangles
             print('Detected ', image_tuple.lineCount, ' rectangles.')
 
-
-
         # multiply the contour (x, y)-coordinates by the resize ratio,
         # then draw the contours and the name of the shape on the image
         c = c.astype("float")
@@ -161,3 +183,4 @@ def findcountours(image_tuple):
                             cv.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     return cnts
+
