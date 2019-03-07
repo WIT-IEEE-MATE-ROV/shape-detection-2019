@@ -45,9 +45,15 @@ else:
 
             pimg = img
             pimg = niproc.processimage(pimg)
-            pimg = cv.pyrDown(pimg.cleanImage)
+            HSV = cv.pyrDown(pimg.HSV)
+            WCS = cv.pyrDown(pimg.BlackWhite)
+            img = cv.pyrDown(pimg.cleanImage)
 
-            cv.imshow("Current image", pimg)
+
+            cv.imshow("Current image", img)
+            cv.imshow("HSV", HSV)
+            cv.imshow("What Code Sees", WCS)
+
             cv.waitKey()
             cv.destroyAllWindows()
 

@@ -92,7 +92,7 @@ def detectsquares(c, image_tuple, Squares):
     if len(approx) <= 4 and len(approx) > 3:
         (x, y, w, h) = cv.boundingRect(approx)
         ar = w / h
-        if ar >= 0.8 and ar <= 1.2:
+        if ar >= 0.85 and ar <= 1.15:
             Squastate = "square"
 
         else:
@@ -135,17 +135,17 @@ def detectshape(c,image_tuple):
         shape = 'Triangle'
         return shape
     if len(approx) > 4:
-        shape = 'Circles'
+        shape = 'Circle'
         return shape
     if len(approx) <= 4 and len(approx) > 3:
         (x, y, w, h) = cv.boundingRect(approx)
         ar = w / h
-        if ar >= 0.6 and ar <= 1.4:
-            shape = "square"
+        if ar >= 0.85 and ar <= 1.5:
+            shape = "Square"
             return shape
 
         else:
-            shape = 'rectangle'
+            shape = 'Rectangle'
             return shape
 
 
