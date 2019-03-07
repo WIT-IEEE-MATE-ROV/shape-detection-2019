@@ -14,7 +14,7 @@ def processimage(image):
     image_tuple = collections.namedtuple('processedImage', ['cleanImage','HSV','BlackWhite', 'squareCount', 'lineCount', 'circleCount', 'triangleCount'])
     # Pull out only the black parts of the image
     # TODO: Should HSV be used here (Currently using BGR)
-    k1 = np.ones((15, 15), np.uint8)
+    k1 = np.ones((8, 8), np.uint8)
     k2 = np.ones((12, 12), np.uint8)
     range_lower = np.array([0, 0, 0])
     range_upper = np.array([255,180,70])
@@ -92,11 +92,11 @@ def detectsquares(c, image_tuple, Squares):
     if len(approx) <= 4 and len(approx) > 3:
         (x, y, w, h) = cv.boundingRect(approx)
         ar = w / h
-        if ar >= 0.6 and ar <= 1.4:
-            Squastate = "rectangle"
+        if ar >= 0.8 and ar <= 1.2:
+            Squastate = "square"
 
         else:
-            Squastate = "square"
+            Squastate = "rectangle"
         return Squastate
 
 
@@ -110,7 +110,7 @@ def detectcircles(c, image_tuple, Circles):
     peri = cv.arcLength(c, True)
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
     Circstate = 'false'
-    if len(approx) > 4 :
+    if len(approx) > 4:
         Circstate = 'true'
         image_tuple.circleCount = Circles
         return Circstate
@@ -123,10 +123,30 @@ def detecttriangles(c, image_tuple, Triangles):
     Tristate = 'false'
     peri = cv.arcLength(c, True)
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
-    if len(approx) == 3:
+    if len(approx) <= 3 and len(approx) > 2:
         Tristate = 'true'
         return Tristate
 
+
+def detectshape(c,image_tuple):
+    peri = cv.arcLength(c, True)
+    approx = cv.approxPolyDP(c, 0.04 * peri, True)
+    if len(approx) <= 3 and len(approx) > 2:
+        shape = 'Triangle'
+        return shape
+    if len(approx) > 4:
+        shape = 'Circles'
+        return shape
+    if len(approx) <= 4 and len(approx) > 3:
+        (x, y, w, h) = cv.boundingRect(approx)
+        ar = w / h
+        if ar >= 0.6 and ar <= 1.4:
+            shape = "square"
+            return shape
+
+        else:
+            shape = 'rectangle'
+            return shape
 
 
 def detectshapes(image_tuple):
@@ -151,6 +171,8 @@ def detectshapes(image_tuple):
 
         Tri = detecttriangles(c, image_tuple, Triangles)
 
+        shape = detectshape(c,image_tuple)
+
         if Tri == 'true':
             Triangles = Triangles + 1
             image_tuple.triangleCount = Triangles
@@ -161,12 +183,12 @@ def detectshapes(image_tuple):
             image_tuple.circleCount = Circles
             print('Detected ', image_tuple.circleCount, ' circles.')
 
-        if Squa == 'rectangle':
+        if Squa == 'square':
             Squares = Squares + 1
             image_tuple.squareCount = Squares
             print('Detected ', image_tuple.squareCount, ' squares.')
 
-        if Squa == 'square':
+        if Squa == 'rectangle':
             Rectangles = Rectangles + 1
 
             image_tuple.lineCount = Rectangles
@@ -174,9 +196,15 @@ def detectshapes(image_tuple):
 
         # multiply the contour (x, y)-coordinates by the resize ratio,
         # then draw the contours and the name of the shape on the image
+        M = cv.moments(c)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+
         c = c.astype("float")
         c = c.astype("int")
         cv.drawContours(image_tuple.cleanImage, [c], -1, (0, 255, 0), 2)
+        cv.putText(image_tuple.cleanImage,shape, (cX, cY), cv.FONT_HERSHEY_SIMPLEX,
+                    0.5, (255, 255, 255), 2)
     return image_tuple
 def findcountours(image_tuple):
     cnts = cv.findContours(image_tuple.processedImage.copy(), cv.RETR_EXTERNAL,
