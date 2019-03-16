@@ -2,6 +2,8 @@ import cv2 as cv
 import numpy as np
 import collections
 import imutils
+from PIL import ImageGrab
+from collections import deque
 
 """
 processimage
@@ -22,6 +24,13 @@ def processimage(image):
     hsv = cv.cvtColor(blurred, cv.COLOR_BGR2HSV)
     image_tuple.HSV = hsv
 
+    Frames = 5
+    Squares = deque(maxlen=Frames)
+    Lines = deque(maxlen=Frames)
+    Triangles = deque(maxlen=Frames)
+    Circles = deque(maxlen=Frames)
+
+
     mask = cv.inRange(hsv, range_lower, range_upper)
     mask = cv.dilate(mask, None, iterations=3)
     mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, k1)
@@ -32,11 +41,11 @@ def processimage(image):
     print (image_tuple.processedImage.dtype)
 
     image_tuple = detectshapes(image_tuple)
-    image_tuple = addoverlay(image_tuple)
+    image_tuple = addoverlay(image_tuple,Squares,Lines,Circles,Triangles)
     return image_tuple
 
 
-def addoverlay(image_tuple):
+def addoverlay(image_tuple,Squares,Lines,Circles,Triangles):
     height, width, channels = image_tuple.cleanImage.shape
 
     font = cv.FONT_HERSHEY_PLAIN
@@ -45,36 +54,56 @@ def addoverlay(image_tuple):
     fontsize = 5
     color = (0, 0, 255)
     linetype = cv.LINE_AA
-
     scale = 6 * fontsize  # allows symbols to grow/shrink based on text size
 
+
     if type(image_tuple.squareCount) != int:
-        squareCount = '0'
+        squareCount = 0
+        Squares.append(int(squareCount))
     else :
-        squareCount = str(image_tuple.squareCount)
+        squareCount = image_tuple.squareCount
+        Squares.append(squareCount)
+
 
     if type(image_tuple.lineCount) != int:
-        lineCount = '0'
+        lineCount = 0
+        Lines.append(int(lineCount))
     else :
-        lineCount = str(image_tuple.lineCount)
+        lineCount = image_tuple.lineCount
+        Lines.append(lineCount)
 
-    if type(image_tuple.triangleCount) !=int:
-        circleCount = '0'
-    else:
-        circleCount = str(image_tuple.circleCount)
 
     if type(image_tuple.triangleCount) != int:
-        triangleCount = '0'
+        circleCount = 0
+        Circles.append(int(circleCount))
     else:
-        triangleCount = str(image_tuple.triangleCount)
+        circleCount = image_tuple.circleCount
+        Circles.append(circleCount)
+        print(Circles)
+
+
+    if type(image_tuple.triangleCount) != int:
+        triangleCount = 0
+        Triangles.append(int(triangleCount))
+    else:
+        triangleCount = image_tuple.triangleCount
+        Triangles.append(triangleCount)
+
+    Squares = sum(Squares) / len(Squares)
+    Squares = str(Squares)
+    Lines = sum(Lines) / len(Lines)
+    Lines = str(Lines)
+    Circles = sum(Circles) / len(Circles)
+    Circles = str(Circles)
+    Triangles = sum(Triangles) / len(Triangles)
+    Triangles = str(Triangles)
 
 
 
-
-    cv.putText(image_tuple.cleanImage, squareCount, (x, y), font, fontsize, color, linetype)
-    cv.putText(image_tuple.cleanImage, lineCount, (x, 2 * y), font, fontsize, color, linetype)
-    cv.putText(image_tuple.cleanImage, circleCount, (x, 3 * y), font, fontsize, color, linetype)
-    cv.putText(image_tuple.cleanImage, triangleCount, (x, 4 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.cleanImage, Squares, (x, y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.cleanImage, Lines, (x, 2 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.cleanImage, Circles, (x, 3 * y), font, fontsize, color, linetype)
+    cv.putText(image_tuple.cleanImage, Triangles, (x, 4 * y), font, fontsize, color, linetype)
 
     cv.rectangle(image_tuple.cleanImage, (2 * x, y - 2 * scale), (2 * x + 2 * scale, y), color, -linetype)
     cv.line(image_tuple.cleanImage, (2 * x + scale, 2 * y - 2 * scale), (2 * x + scale, 2 * y), color, linetype)
@@ -83,6 +112,7 @@ def addoverlay(image_tuple):
     cv.fillPoly(image_tuple.cleanImage, [pts], color)
 
     return image_tuple
+
 
 
 def detectsquares(c, image_tuple, Squares):
@@ -99,13 +129,6 @@ def detectsquares(c, image_tuple, Squares):
             Squastate = "rectangle"
         return Squastate
 
-
-def detectlines(c):
-    # TODO
-    print('Detected ', processed_img.lineCount, ' lines.')
-    return processed_img
-
-
 def detectcircles(c, image_tuple, Circles):
     peri = cv.arcLength(c, True)
     approx = cv.approxPolyDP(c, 0.04 * peri, True)
@@ -114,10 +137,6 @@ def detectcircles(c, image_tuple, Circles):
         Circstate = 'true'
         image_tuple.circleCount = Circles
         return Circstate
-
-
-
-
 
 def detecttriangles(c, image_tuple, Triangles):
     Tristate = 'false'
@@ -176,23 +195,23 @@ def detectshapes(image_tuple):
         if Tri == 'true':
             Triangles = Triangles + 1
             image_tuple.triangleCount = Triangles
-            print('Detected ', image_tuple.triangleCount, ' triangles.')
+           # print('Detected ', image_tuple.triangleCount, ' triangles.')
 
         if Circ == 'true':
             Circles = Circles + 1
             image_tuple.circleCount = Circles
-            print('Detected ', image_tuple.circleCount, ' circles.')
+          #  print('Detected ', image_tuple.circleCount, ' circles.')
 
         if Squa == 'square':
             Squares = Squares + 1
             image_tuple.squareCount = Squares
-            print('Detected ', image_tuple.squareCount, ' squares.')
+         #   print('Detected ', image_tuple.squareCount, ' squares.')
 
         if Squa == 'rectangle':
             Rectangles = Rectangles + 1
 
             image_tuple.lineCount = Rectangles
-            print('Detected ', image_tuple.lineCount, ' rectangles.')
+           # print('Detected ', image_tuple.lineCount, ' rectangles.')
 
         # multiply the contour (x, y)-coordinates by the resize ratio,
         # then draw the contours and the name of the shape on the image
