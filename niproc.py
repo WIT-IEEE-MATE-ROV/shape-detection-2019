@@ -67,7 +67,22 @@ def detectsquares(processed_img):
 
 
 def detectlines(processed_img):
-    # TODO
+    
+    #Use edge function
+    edges = cv2.Canny(gray,50,150,apertureSize = 3)
+    
+    threshold = 60
+    
+    #Set mininmum detection length to 10 pixels
+    minLineLength = 10
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, 0, minLineLength, 20);
+    
+    if (lines is None or len(lines) == 0):
+      return
+    
+    else: 
+    print(len(lines))
+    
     print('Detected ', processed_img.lineCount, ' lines.')
     return processed_img
 
